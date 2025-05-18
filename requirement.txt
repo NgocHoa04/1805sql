@@ -1,0 +1,7 @@
+streamlit
+streamlit-extras
+pandas
+python-dotenv
+sqlalchemy
+reportlab
+geopy
