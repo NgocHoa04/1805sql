@@ -6,8 +6,8 @@ from Report import SchoolAnalytics
 VisualHandler.initial()
 school = SchoolAnalytics()
 class Dashboard():
-    @staticmethod
     @st.cache_data
+    @staticmethod
     def display_map(term, year):
         st.divider()
         try:
