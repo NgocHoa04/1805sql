@@ -41,6 +41,28 @@ class Manager:
                 print("MySQL connection closed")
         return None
     @staticmethod
+    def get_all_term():
+        query = "SELECT DISTINCT Term FROM Academic_period"
+        df = Manager.fetch_data(query)
+        try:
+            result = tuple(row['Term'] for _,row in df.iterrows())
+            return result
+        except Exception as e:
+            return(f"Error: {e}")
+        
+    @staticmethod
+    @staticmethod
+    def get_all_year():
+        query = "SELECT DISTINCT Year FROM Academic_period"
+        df = Manager.fetch_data(query)
+        try:
+            result = tuple(row['Year'] for _,row in df.iterrows())
+            return result
+        except Exception as e:
+            return(f"Error: {e}")
+        
+
+    @staticmethod
     def get_all_classes():
         query = "SELECT ClassID, ClassName FROM Classes"
         df = Manager.fetch_data(query)
@@ -190,8 +212,7 @@ class Manager:
             df = pd.DataFrame(students)
             return df
         except Error as e:
-            print(f"Error executing GetClassStudents: {e}")
-            return pd.DataFrame()
+            return(f"Error executing GetClassStudents: {e}")
         finally:
             cursor.close()
             conn.close()
@@ -257,13 +278,13 @@ class Manager:
         
 #Student         
     @staticmethod
-    def add_student_with_class(name, address, birthdate, email, note, class_name, Term, Year):
+    def add_student_with_class(name, address, birthdate, email,  class_name, Term, Year):
         conn = Manager.connect_db()
         if not conn:
             return pd.DataFrame()
         try:
             cursor = conn.cursor(dictionary=True)
-            cursor.callproc('AddStudentWithClass', [name, address, birthdate, email, note, class_name, Term, Year])
+            cursor.callproc('AddStudentWithClass', [name, address, birthdate, email, class_name, Term, Year])
             for result in cursor.stored_results():
                 data = result.fetchall()
             conn.commit()

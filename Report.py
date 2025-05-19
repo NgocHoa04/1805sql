@@ -10,7 +10,7 @@ from reportlab.platypus import SimpleDocTemplate, Table as RLTable, Paragraph, T
 from reportlab.lib.styles import getSampleStyleSheet
 from geopy.geocoders import Nominatim
 from geopy.extra.rate_limiter import RateLimiter
-
+import streamlit as st
 class SchoolAnalytics:
     def __init__(self):
         load_dotenv()
@@ -162,9 +162,8 @@ class SchoolAnalytics:
 
         if not results:
             return f"No data found for class '{class_name}' in term {term} of year {year}."
-
         df = pd.DataFrame(results)
-        return df["AverageScore"]
+        return float(results[0]["AverageScore"])
 
     def top_students_per_class(self, class_name: str, term: int, year: int, top_n: int):
         conn = self.engine.raw_connection()
@@ -221,6 +220,7 @@ class SchoolAnalytics:
             "SubjectName": "Subject Name",
             "SubjectAvg": "Average Score"
         })
+        df = df.drop(columns = ["Class Name", "Term", "Year"])
         return df
 
     def generate_teacher_load(self, term: int, year: int):
@@ -240,7 +240,7 @@ class SchoolAnalytics:
         if not results:
             return f"No data found for term {term} and year {year}."
 
-        df = pd.DataFrame(results).drop(columns=["NumStudents"]).rename(columns={
+        df = pd.DataFrame(results).rename(columns={
             "TeacherID": "Teacher ID",
             "TeacherName": "Teacher Name",
             "SubjectName": "Subject Name",
@@ -255,8 +255,9 @@ class SchoolAnalytics:
         SELECT s.StudentID, s.StudentName, s.Address
         FROM Students s
         JOIN Students_Classes sc ON s.StudentID = sc.StudentID
-        JOIN Classes c ON sc.ClassID = c.ClassID
-        JOIN Academic_period ap ON c.AcademicPeriodID = ap.AcademicPeriodID
+        JOIN Class_period cl ON sc.Class_perID = cl.id
+        JOIN Classes c ON cl.ClassID = c.ClassID
+        JOIN Academic_period ap ON cl.PerId = ap.PerId
         WHERE s.Address IS NOT NULL AND s.Address <> ''
         AND ap.Term = :term AND ap.Year = :year
     """)
@@ -264,7 +265,7 @@ class SchoolAnalytics:
             result = conn.execute(sql, {"term": term, "year": year})
             return pd.DataFrame(result.fetchall(), columns=result.keys())
 
-    def get_student_locations_df(self, term, year):
+    def get_student_locations_df(self, term : int, year : int):
         df = self.get_students_with_address(term, year)
         print(f"Total {len(df)} students with address")
 
@@ -286,9 +287,13 @@ class SchoolAnalytics:
                 else:
                     print(f"Not found coordinate for: {address}")
             except Exception as e:
-                print(f"Error geocoding '{address}': {e}")
+                return(f"Error geocoding '{address}': {e}")
         df = pd.DataFrame(geo_results)
-        df = df.drop(columns=["StudentID", "Student Name", "Address"])  # Sửa lỗi đánh máy 'cloumns'
+        df = df.drop(columns=["StudentID", "Student Name", "Address"])
+        df = df.rename(columns={
+            "Latitude": "latitude",
+            "Longitude": "longitude"
+        })
         return df
 
     def top_students_overall(self, term: int, year: int, top_n: int):
