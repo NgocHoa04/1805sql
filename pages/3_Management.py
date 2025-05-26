@@ -1,3 +1,4 @@
+
 import streamlit as st
 import sys
 import os
@@ -8,28 +9,37 @@ manager = Manager()
 VisualHandler.initial()
 
 class Management:
-    st.cache_data
+    @classmethod
+    def clsid_to_clsname(cls):
+        st.session_state.main_class_name = manager.find_class_name_by_id(st.session_state.main_class_id)
+    def clsname_to_clsid(cls):
+        st.session_state.main_class_id = manager.find_class_id_by_name(st.session_state.main_class_name)
 
     @classmethod
     def more_class(cls):
         add_class_name = st.text_input("Add a new Class", placeholder = "Enter new class name")
         if st.button("Add Class"):
             manager.add_class(add_class_name)
-            st.balloons()
+            st.success("Add Class Successfully")
     @classmethod
     def delete_class(cls):
         delete_class_name = st.selectbox("Select Class to delete", manager.get_all_classes())
         if st.button("Delete Class"):
             manager.delete_class(delete_class_name)
-            st.balloons()
+            st.success("Delete Class Successfully")
+    @classmethod
+    def teacher_id_to_name(cls):
+        st.session_state.main_teacher_name = manager.find_teacher_name_by_teacher_id(st.session_state.main_teacher_id)
+    @classmethod
+    def teacher_name_to_id(cls):
+        st.session_state.main_teacher_id = manager.find_teacher_id_by_name(st.session_state.main_teacher_name)
     @classmethod
     def update_class(cls):
         update_class_name = st.selectbox("Select Class to update", manager.get_all_classes())
         new_class_name = st.text_input("Enter new class name")
-        cls_id_new = st.text_input("Enter new class ID")
-        if st.button("Update Class"):
-            manager.update_class(cls_id_new, new_class_name)
-            st.balloons()
+        if st.button("Update Class Name", key = 'update class only'):
+            manager.update_class(manager.find_class_id_by_name(update_class_name), new_class_name)
+            st.success("Update class Information Successfully")
     @classmethod
     def get_class_students(cls, main_class_id, main_class_name,term, year):
         try:
@@ -42,43 +52,33 @@ class Management:
         except:
             return(manager.get_class_students(main_class_id, main_class_name, term, year))
     @classmethod
-    def more_student(cls, main_class_name, term ,year):
-        add_student_name = st.text_input("New Student Name", placeholder = "Enter new student name")
-        add_student_address = st.text_input("New Student Address ")
-        add_student_birthdate = st.date_input("Student Birthdate")
-        add_student_email = st.text_input("Student Email")
+    def add_student_to_class(cls, main_class_id, term ,year):
+        add_student_id = st.text_input("Enter Student ID", key = "student id to add to class")
         if st.button("Add Student in Class"):
-            manager.add_student_with_class(add_student_name, add_student_address, add_student_birthdate, add_student_email, main_class_name, term, year)
-            st.balloons()
+            st.info(manager.find_student_by_id(add_student_id))
+            manager.add_student_with_class(add_student_id, main_class_id, term, year)
+            st.success("Add Student in Class Successfully")
     
+
+
     @classmethod
-    def update_student(cls):
-            st.success("About to fix the update")
-        # if st.button("Update Name"):
-        #     update_student_name = st.text_input("Enter update student name")
-        # update_class_name = st.selectbox("Select Class ", manager.get_all_classes())
-        # cls_id_new = st.text_input("Enter new class ID")
-        # if st.button("Update Class"):
-        #     manager.update_class(cls_id_new, new_class_name)
-            #st.balloons()         
-    @classmethod
-    def delete_student(cls):
-        delete_student_id = st.text_input("Enter Student ID to delete")
+    def delete_student_from_class(cls, main_class_id, term, year):
+        delete_student_id = st.text_input("Enter Student ID to delete", key = "student id to delete from class")
         try:
-            if st.button("Delete Student"):
-                manager.delete_student(delete_student_id)
-                st.balloons()
+            if st.button("Delete Student", key = "delete student from class"):
+                manager.remove_student_from_class(delete_student_id, main_class_id, term, year)
+                st.success("Delete student from class")
         except:
-            st.warning(manager.delete_student(delete_student_id))
+            st.warning(manager.remove_student_from_class(delete_student_id, main_class_id, term, year))
     @classmethod
     def delete_teacher(cls):
         delete_teacher_id = st.text_input("Enter Teacher ID to delete")
         try:
             if st.button("Delete Teacher"):
-                manager.delete_student(delete_teacher_id)
-                st.balloons()
+                manager.delete_teacher(delete_teacher_id)
+                st.success("Delete teacher successfully")
         except:
-            st.warning(manager.delete_student(delete_teacher_id))
+            st.warning(manager.delete_teacher(delete_teacher_id))
     @classmethod
     def add_teacher(cls):
         add_teacher_name = st.text_input("Add a new Teacher", placeholder = "Enter new teacher name")
@@ -87,31 +87,77 @@ class Management:
         add_teacher_email = st.text_input("Add a new Teacher", placeholder = "Enter new teacher email")
         if st.button("Add Teacher"):
             manager.add_teacher(add_teacher_name, subject_teach, add_teacher_email)
-            st.balloons()
+            st.success("Add teacher successfully")
     @classmethod
     def update_teacher(cls):
-        update_teacher_id = st.text_input("Enter Teacher ID to update")
-        update_teacher_name = st.text_input("Enter Teacher Name")
-        long_sj_id = st.selectbox("Select Subject", manager.get_all_subjects(), key = "update teacher subject")
-        update_teacher_subject_id = int(long_sj_id.split(",")[0].strip())
-        update_teacher_email = st.text_input("Enter Teacher Email")
-    
         try:
-            if st.button("Update Teacher In4"):
-                manager.update_teacher(update_teacher_id, update_teacher_name,  update_teacher_subject_id, update_teacher_email)
+            update_teacher_id = st.text_input("Enter Teacher ID to update")
+            update_teacher_name = st.text_input("Enter Teacher Name")
+            if st.button("Update teacher name"):
+                manager.update_teacher_name(update_teacher_id)
+                st.success("Update successful")
+            long_sj_id = st.selectbox("Select Subject", manager.get_all_subjects(), key = "update teacher subject")
+            if st.button("Update Subject"):
+                update_teacher_subject_id = int(long_sj_id.split(",")[0].strip())
+                manager.update_teacher_subject(update_teacher_id)
+                st.success("Update successful")
+            update_teacher_email = st.text_input("Enter Teacher Email")
+            if st.button("Update Email"):
+                manager.update_teacher_email(update_teacher_id)
                 st.success("Update successful")
         except:
-            st.warning(manager.update_student( update_teacher_id, update_teacher_name, update_teacher_subject_id, update_teacher_email))
+            st.warning(manager.update_teacher( update_teacher_id, update_teacher_name, update_teacher_subject_id, update_teacher_email))
     @classmethod
     def get_class_bill(cls, term, year):
         try:
-            st.dataframe(manager.get_fee_by_class_term_year( term, year))
+            st.dataframe(manager.get_fee_by_class_term_year(st.session_state.main_class_id, term, year))
             st.success("Got the fee load for Class")
         except:
             st.warning(manager.get_fee_by_class_term_year(term, year))
     @classmethod
+    def add_student(cls):
+        add_student_name = st.text_input("New Student Name", placeholder = "Enter new student name")
+        add_student_address = st.text_input("New Student Address ")
+        add_student_birthdate = st.date_input("Student Birthdate")
+        add_student_email = st.text_input("Student Email")
+        if st.button("Add Student"):
+            manager.add_student(add_student_name, add_student_address, add_student_birthdate, add_student_email, term, year)
+            st.success("Add Student in Class Successfully")
+    
+    @classmethod
+    def update_student(cls):
+        update_student_id = st.text_input("Enter Student ID", key = "id student to update in database")
+        update_student_name = st.text_input("Enter Student Name", key = "update student name information")
+        if st.button("Update Student Name", key = "update student name button"):
+            manager.update_student_name(update_student_id, update_student_name)
+            st.success("Update Student Name Successfully")
+        update_student_address = st.text_input("Enter Student Adress", key = "update student adress information")
+        if st.button("Update Student Address", key = "update student address button"):
+            manager.update_student_address(update_student_id,student_id = None, student_name= update_student_address)
+            st.success("Update Student Address Successfully")
+        update_student_email = st.text_input("Enter Student Email", key = "update student email information")
+        if st.button("Update Student Email", key = "update student email button"):
+            manager.update_student_email(update_student_id, student_name = None, email = update_student_email)
+            st.success("Update Student Email Successfully")
+        update_student_birthdate = st.date_input("Enter Student Birthdate", key = "update student birthdate information")
+        if st.button("Update Student Birthdate", key = "update student birthdate button"):
+            manager.update_student_birth_date(update_student_id, student_name = None, birth_date = update_student_birthdate)
+            st.success("Update Student Name Successfully")
+
+    @classmethod
+    def delete_student(cls):
+        delete_student_id = st.text_input("Enter Student ID to delete", key ='std id to delete' )
+        try:
+            if st.button("Delete Student From Database", key = "delete from database"):
+                manager.delete_student(delete_student_id)
+                st.success("Delete student from Database")
+        except:
+            st.warning(manager.delete_student(delete_student_id))
+
+
+    @classmethod
     def get_student_fee_load(cls):
-        student_fee_id = st.text_input("Enter Student ID to get fee load")
+        student_fee_id = st.text_input("Enter Student ID to get fee load", key = "id stude to get fee load")
         if st.button("Take Student Fee Load"):
             try:
                 st.dataframe(manager.get_fee_summary_by_student(student_fee_id))
@@ -147,36 +193,33 @@ class Management:
 ############### Class Tab ################
                 column1 ,column2 = st.columns([0.5,0.5])
                 with column1:
-                    main_class_id = st.text_input("Enter Class ID", placeholder = "Enter class ID")
+                    main_class_id = st.text_input("Enter Class ID",key = "main_class_id", on_change = cls.clsid_to_clsname,  placeholder = "Enter class ID")
                 with column2:
-                    main_class_name = st.text_input("Enter Class Name", placeholder = "Enter class name")
+                    main_class_name = st.text_input("Enter Class Name",key = 'main_class_name', on_change = cls.clsid_to_clsname, placeholder = "Enter class name")
                 
                 if main_class_id.isdigit():
                     main_class_id = int(main_class_id)
                     st.dataframe(manager.find_class(main_class_id, main_class_name, term, year))
-                    st.balloons()
                 else:
                     st.warning("Please enter a valid numeric Class ID.")
                     main_class_id = None  # or return early
                 
                 if st.button("Show all students in class"):
                     try:
-                        st.dataframe(cls.get_class_students( main_class_id, main_class_name,term, year))
+                        st.dataframe(cls.get_class_students(st.session_state.main_class_id, st.session_state.main_class_name,term, year))
                     except:
-                        st.warning(cls.get_class_students( main_class_id,main_class_name,term, year))
+                        st.warning(cls.get_class_students( st.session_state.main_class_id,st.session_state.main_class_name,term, year))
                 st.divider()
 ############### Class Tab ################
                 st.subheader("Class Schedule")
-                st.dataframe(manager.get_class_schedule(main_class_id, main_class_name, term, year))
+                st.dataframe(manager.get_class_schedule(st.session_state.main_class_id, st.session_state.main_class_name, term, year))
 ############### Class Tab ################
                 st.subheader("Manage Student Information")
-                clm1, clm2, clm3 = st.columns([1,1,1])
+                clm1, clm2 = st.columns([0.5,0.5])             
                 with clm1:
-                    cls.more_student(main_class_name, term, year)
+                    cls.add_student_to_class(st.session_state.main_class_id, term, year)
                 with clm2:
-                    cls.delete_student()
-                with clm3:
-                    cls.update_student()
+                    cls.delete_student_from_class(st.session_state.main_class_id, term, year)
                 st.divider()
 ############### Class Tab ################
                 st.subheader("Class Fee Load")
@@ -199,14 +242,17 @@ class Management:
                     teacher_year = st.selectbox("Year", manager.get_all_year(), key = "teacher year")
                 ############### Class Tab ################
                 st.subheader("Find Teacher")
-                find_teacher_id = st.text_input("Enter Teacher ID", placeholder = "Enter teacher ID")
-                find_teacher_name = st.text_input("Enter Teacher Name", placeholder = "Enter teacher name")
+                clm1,clm2 = st.columns([0.5, 0.5])
+                with clm1:
+                    main_teacher_id = st.text_input("Enter Teacher ID", key = "main_teacher_id", on_change = cls.teacher_id_to_name,  placeholder = "Enter teacher ID")
+                with clm2:
+                    main_teacher_name = st.text_input("Enter Teacher Name", key = "main_teacher_name", on_change = cls.teacher_name_to_id, placeholder = "Enter teacher name")
                 if st.button("Find Teacher", key = "find teacher button"):
-                    st.dataframe(manager.find_teacher(find_teacher_id, find_teacher_name))
+                    st.dataframe(manager.find_teacher(st.session_state.main_teacher_id, st.session_state.main_teacher_name))
                 st.divider()
 
                 st.subheader("Teacher Schedule")
-                st.dataframe(manager.get_teacher_schedule(find_teacher_id, teacher_term, teacher_year))
+                st.dataframe(manager.get_teacher_schedule(st.session_state.main_teacher_id, teacher_term, teacher_year))
                 st.divider()
 ############### Class Tab ################
                 col1, col2,col3 = st.columns([1,1,1], border = True)
@@ -218,7 +264,36 @@ class Management:
                     cls.update_teacher()
                 ############### Class Tab ################
                 st.divider()
-            
+############### Tab divider##########
+            with tab3:
+                if st.button("Show all students", key = "show all student"):
+                    st.dataframe(manager.get_all_student())
+                ############### Class Tab ################
+                st.divider()
+                st.subheader("Adjust Student Database")
+                st.subheader("Update Student Information")
+                co1, co2, co3 = st.columns([1,1,1])
+                with co1:
+                    cls.add_student()
+                with co2:
+                    cls.delete_student()
+                with co3:
+                    cls.update_student()
+                ############### Class Tab ################
+                st.divider()
+                st.subheader("Show student fees load")
+                if st.text_input("Enter Student ID", key = "main_student_id"):
+                    st.info(manager.find_student_by_id())
+                if st.button("Get Student Feeload"):
+                    st.dataframe(manager.get_fee_detail_by_student(st.session_state.main_student_id))
+
+            with tab4:
+                st.subheader("Grade of Student")
+                st.divider()
+                st.subheader("Add Grade")
+                st.divider()
+                st.subheader("Update Grade")
+
                 
                
                     

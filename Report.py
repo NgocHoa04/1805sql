@@ -39,6 +39,31 @@ class SchoolAnalytics:
 
         self.geolocator = Nominatim(user_agent="my_geocoder", timeout=5)
         self.geocode = RateLimiter(self.geolocator.geocode, min_delay_seconds=1.5, max_retries=3)
+    def get_summary_stats(self):
+        conn = self.engine.raw_connection()
+        try:
+            cursor = conn.cursor()
+            query = """
+                SELECT 
+                    (SELECT COUNT(*) FROM Students),
+                    (SELECT COUNT(*) FROM Teachers),
+                    (SELECT CAST(SUM(Value) AS DECIMAL(15,2)) FROM Money)
+            """
+            cursor.execute(query)
+            result = cursor.fetchone()
+            # Optionally convert to float in Python as extra safety
+            student_count = result[0]
+            teacher_count = result[1]
+            total_money = float(result[2]) if result[2] is not None else 0.0
+            return student_count, teacher_count, total_money
+        except Exception as e:
+            print(f"Error in get_summary_stats: {e}")
+            return 0, 0, 0.0
+        finally:
+            cursor.close()
+            conn.close()
+
+
     def take_class_name(self):
         conn = self.engine.raw_connection()
         try:

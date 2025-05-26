@@ -2,9 +2,11 @@ import streamlit as st
 from Modules import VisualHandler
 import pandas as pd
 from Report import SchoolAnalytics
+from Management import Manager
 
 VisualHandler.initial()
 school = SchoolAnalytics()
+money = Manager()
 class Dashboard():
     @st.cache_data
     @staticmethod
@@ -19,9 +21,10 @@ class Dashboard():
     def display_dasboard(cls):
         if st.session_state.log == True:
             col1, col2, col3 = st.columns(3)
-            col1.metric("Student", "1250", "1.2%", border = True)
-            col2.metric("Teachers", "50", "-8%", border = True)
-            col3.metric("Earning", "$240000", "5%", border = True)
+            tol_stu, tol_teacher, tol_money = school.get_summary_stats()
+            col1.metric("Student", tol_stu, "1.2%", border = True)
+            col2.metric("Teachers", tol_teacher, "-8%", border = True)
+            col3.metric("Earning", tol_money, "5%", border = True)
          ############### Class Tab ################
 
             cl1, cl2 = st.columns([0.5,0.5])
@@ -76,6 +79,8 @@ class Dashboard():
                 with col1:
                     st.subheader("Top Students")
                 st.dataframe(school.top_students_per_class(class_name, term, year, top_n = 2))
+            with tab3:
+                st.dataframe(money.get_fee_summary_by_period(term, year))
 if st.session_state.log == True:
     Dashboard.display_dasboard()
 else:
